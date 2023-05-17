@@ -1,0 +1,93 @@
+---
+title: "2.2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## 2.2 Rolling Correlation
+
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+data <- read.csv("bret-1.csv")
+```
+
+- Using the w-min backwards correlation formula provided in the specifications, get the maximum value between the difference of the row and three weeks and the integer 1. If 1 is the maximum value, then calculate the correlation by indexing from 1 to i. If 1 is not the maximum value, then start from different index. 
+```{r}
+three_weeks <- 21 * 24 * 60
+three_weeks
+
+correlations <- c()
+for(i in 1:length(data$Asset_1_BRet_3)) {
+ 
+  indexes <- max((i-three_weeks), 1)
+ 
+  if(indexes == 1) {
+    correlations <- c(correlations, round(cor(data$Asset_1_BRet_3[1:i], data$Asset_2_BRet_3[1:i]),4))
+  }
+ 
+  else{
+   
+   correlations <- c(correlations, round(cor(data$Asset_1_BRet_3[indexes:i], data$Asset_2_BRet_3[indexes:i]),4))
+  }
+ 
+}
+```
+
+```{r}
+
+correlations1 <- c()
+for(i in 1:length(data$Asset_1_BRet_3)) {
+ 
+  indexes <- max((i-three_weeks), 1)
+ 
+  if(indexes == 1) {
+    correlations1 <- c(correlations1, round(cor(data$Asset_1_BRet_3[1:i], data$Asset_3_BRet_3[1:i]),4))
+  }
+ 
+  else{
+   
+   correlations1 <- c(correlations1, round(cor(data$Asset_1_BRet_3[indexes:i], data$Asset_3_BRet_3[indexes:i]),4))
+  }
+ 
+}
+
+
+```
+
+```{r}
+
+correlations2 <- c()
+for(i in 1:length(data$Asset_1_BRet_3)) {
+ 
+  indexes <- max((i-three_weeks), 1)
+ 
+  if(indexes == 1) {
+    correlations2 <- c(correlations2, round(cor(data$Asset_2_BRet_3[1:i], data$Asset_3_BRet_3[1:i]),4))
+  }
+ 
+  else{
+   
+   correlations2 <- c(correlations2, round(cor(data$Asset_2_BRet_3[indexes:i], data$Asset_3_BRet_3[indexes:i]),4))
+  }
+ 
+}
+
+```
+
+```{r}
+Rho_1_2 <- correlations
+Rho_1_3 <- correlations1
+Rho_2_3 <- correlations2
+zero <- c(0,0,0)
+corr <- data.frame(Rho_1_2, Rho_2_3, Rho_1_3)
+corr[1,] <- zero
+corr
+```

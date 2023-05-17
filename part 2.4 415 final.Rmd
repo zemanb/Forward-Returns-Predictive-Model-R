@@ -1,0 +1,80 @@
+---
+title: "2.4"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(FNN)
+```
+
+- Splitting training and test data (using first 70% as training data and the last 30% as testing data).
+```{r}
+tbl1 = read_csv("final_project_data.csv")
+tbl2 = read_csv("bret.csv")
+tbl = cbind(tbl1, tbl2)
+
+minimum <- min((tbl$...1 + 10), 524160)
+
+tbl$min10 = minimum
+tbl$rf10 = (tbl$Asset_1[tbl$min10] - tbl$Asset_1)/tbl$Asset_1
+
+cutoff = floor(nrow(tbl)*.7)
+
+training = tbl[1:cutoff,]
+
+testing = tbl[(cutoff+1):nrow(tbl),]
+```
+
+- Remove unecessary columns from the training and test data.
+```{r}
+
+X_train = training %>% dplyr::select(-...1, -Asset_1, -Asset_2, -Asset_3, -min10, -rf10)
+
+X_test = testing %>% dplyr::select(-...1, -Asset_1, -Asset_2, -Asset_3, -min10, -rf10)
+
+```
+
+```{r}
+k_range = c(5,25,125,625,1000)
+trainMSE = c() #creating null vector
+testMSE = c()
+for(i in 1:length(k_range)){
+  knnTrain <- knn.reg(train = X_train, y = training$rf10,
+  test = X_train,k = k_range[i])
+  trainMSE[i] <- mean((training$rf10 - knnTrain$pred)^2)
+  
+  knnTest <- knn.reg(train = X_train, y = training$rf10,
+  test = X_test, k = k_range[i])
+  testMSE[i] <- mean((testing$rf10 - knnTest$pred)^2)
+}
+
+```
+
+- We notice that, based on validation MSE, the best K for this dataset is 25.
+```{r}
+
+plot(trainMSE ~ I(k_range), type = "b", lwd = 2, col = "blue",
+main = "Training MSE for KNN", xlab = "K", ylab = "trainMSE")
+# Add the test MSE
+plot(testMSE ~ I(k_range), type = "b", lwd = 2, col = "red", xlab = "K")
+```
+
+- Generating the prediction for the entire year.
+```{r}
+knnTrain1 <- knn.reg(train = X_train, y = training$rf10,
+  test = X_train,k = 25)
+
+knnTest1 <- knn.reg(train = X_train, y = training$rf10,
+  test = X_test, k = 25)
+
+prediction <- c(knnTrain1$pred, knnTest1$pred)
+```
+
+- The in-sample and out of sample correlation are displayed respectively.
+```{r}
+cor(X_train, knnTrain1$pred)
+
+cor(X_test, knnTest1$pred)
+
+```
